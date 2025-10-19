@@ -15,6 +15,11 @@ export class AoEAbility extends Ability {
   protected execute(playerX: number, playerY: number, targetX: number, targetY: number): void {
     // Cria explosão na posição do jogador
     this.createExplosionEffect(playerX, playerY);
+
+    // Aplica dano em área (2 de dano, 100px de raio, 100px de knockback)
+    if (this.onDamageCallback) {
+      this.onDamageCallback(playerX, playerY, 2, this.radius, 100);
+    }
   }
 
   private createExplosionEffect(x: number, y: number): void {

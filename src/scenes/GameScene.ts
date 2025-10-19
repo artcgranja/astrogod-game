@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { IsometricMap } from '../objects/IsometricMap';
 import { Player } from '../objects/Player';
 import { AbilityUI } from '../objects/AbilityUI';
+import { Enemy } from '../objects/Enemy';
+import { EnemySpawner } from '../objects/EnemySpawner';
 import { isometricToCartesian } from '../utils/IsometricUtils';
 
 /**
@@ -19,11 +21,19 @@ export class GameScene extends Phaser.Scene {
     E: Phaser.Input.Keyboard.Key;
   };
 
+  // Sistema de inimigos
+  private enemySpawner!: EnemySpawner;
+  private killCount: number = 0;
+  private killCounterText!: Phaser.GameObjects.Text;
+  private startTime: number = 0;
+
   constructor() {
     super({ key: 'GameScene' });
   }
 
   create(): void {
+    this.startTime = Date.now();
+
     // Cria o mapa isométrico (20x20 tiles)
     this.map = new IsometricMap(this, 20, 20);
 
@@ -31,6 +41,19 @@ export class GameScene extends Phaser.Scene {
     const centerX = Math.floor(this.map.getMapWidth() / 2);
     const centerY = Math.floor(this.map.getMapHeight() / 2);
     this.player = new Player(this, centerX, centerY);
+
+    // Define callback de morte do player
+    this.player.setOnDeathCallback(() => {
+      this.handlePlayerDeath();
+    });
+
+    // Define callback de dano das habilidades
+    this.player.setAbilityDamageCallback((x, y, damage, radius, knockback) => {
+      this.handleAbilityDamage(x, y, damage, radius, knockback);
+    });
+
+    // Cria o spawner de inimigos
+    this.enemySpawner = new EnemySpawner(this, this.player, this.map.getMapWidth(), this.map.getMapHeight());
 
     // Cria o marcador de destino (inicialmente invisível)
     this.targetMarker = this.add.graphics();
@@ -52,6 +75,9 @@ export class GameScene extends Phaser.Scene {
 
     // Exibe instruções
     this.showInstructions();
+
+    // Cria kill counter
+    this.createKillCounter();
   }
 
   private setupCamera(): void {
@@ -122,6 +148,23 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private createKillCounter(): void {
+    // Cria texto do kill counter com símbolo de caveira
+    this.killCounterText = this.add.text(10, 90, '☠ 0', {
+      fontFamily: 'Courier New',
+      fontSize: '20px',
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: { x: 10, y: 5 }
+    });
+    this.killCounterText.setScrollFactor(0);
+    this.killCounterText.setDepth(10000);
+  }
+
+  private updateKillCounter(): void {
+    this.killCounterText.setText(`☠ ${this.killCount}`);
+  }
+
   private showTargetMarker(x: number, y: number): void {
     this.targetMarker.clear();
     this.targetMarker.lineStyle(3, 0x00ff00, 1);
@@ -155,9 +198,62 @@ export class GameScene extends Phaser.Scene {
     instructions.setDepth(10000);
   }
 
+  /**
+   * Callback chamado quando habilidades causam dano
+   */
+  private handleAbilityDamage(x: number, y: number, damage: number, radius?: number, knockback?: number): void {
+    const enemies = this.enemySpawner.getEnemies();
+
+    enemies.forEach(enemy => {
+      const enemyPos = enemy.getPosition();
+      const dist = Phaser.Math.Distance.Between(x, y, enemyPos.x, enemyPos.y);
+
+      // Se tem radius, é AoE ou Beam width
+      if (radius !== undefined && dist <= radius) {
+        enemy.takeDamage(damage);
+
+        // Aplica knockback se especificado
+        if (knockback !== undefined) {
+          const enemyGrid = enemy.getGridPosition();
+          const playerGrid = this.player.getGridPosition();
+          enemy.knockback(playerGrid.x, playerGrid.y, knockback);
+        }
+
+        // Verifica se morreu
+        if (enemy.isDeadState()) {
+          this.killCount++;
+          this.updateKillCounter();
+        }
+      }
+    });
+  }
+
+  /**
+   * Chamado quando o player morre
+   */
+  private handlePlayerDeath(): void {
+    const survivalTime = Math.floor((Date.now() - this.startTime) / 1000);
+
+    // TODO: Salvar estatísticas no localStorage
+
+    // Aguarda um momento antes de mostrar Game Over
+    this.time.delayedCall(1000, () => {
+      // TODO: Transição para GameOverScene
+      console.log(`Game Over! Kills: ${this.killCount}, Tempo: ${survivalTime}s`);
+      this.scene.restart();
+    });
+  }
+
   update(time: number, delta: number): void {
+    if (!this.player.isAlive()) {
+      return; // Para de atualizar se player morreu
+    }
+
     // Atualiza o personagem
     this.player.update(delta);
+
+    // Atualiza o spawner de inimigos
+    this.enemySpawner.update(delta);
 
     // Atualiza a UI de habilidades
     this.abilityUI.update();

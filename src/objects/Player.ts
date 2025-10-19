@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { cartesianToIsometric, isometricToCartesian, distance, angleBetween } from '../utils/IsometricUtils';
 import { AbilityManager } from './abilities/AbilityManager';
+import { HealthBar } from './HealthBar';
 
 /**
  * Classe do personagem principal
@@ -16,12 +17,23 @@ export class Player {
   private abilityManager: AbilityManager;
   private isLockedByCast: boolean = false;
 
+  // Sistema de vida
+  private maxHealth: number = 10;
+  private currentHealth: number = 10;
+  private healthBar: HealthBar;
+  private isInvulnerable: boolean = false;
+  private onDeathCallback?: () => void;
+
   constructor(scene: Phaser.Scene, gridX: number, gridY: number) {
     this.scene = scene;
     this.gridX = gridX;
     this.gridY = gridY;
     this.sprite = this.createPlayerSprite();
     this.updatePosition();
+
+    // Cria barra de vida
+    const pos = this.getPosition();
+    this.healthBar = new HealthBar(scene, pos.x, pos.y - 35, this.maxHealth);
 
     // Inicializa o gerenciador de habilidades
     this.abilityManager = new AbilityManager(scene);
@@ -37,11 +49,18 @@ export class Player {
     });
   }
 
+  /**
+   * Define callback para quando habilidades causam dano
+   */
+  public setAbilityDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number) => void): void {
+    this.abilityManager.setDamageCallback(callback);
+  }
+
   private createPlayerSprite(): Phaser.GameObjects.Graphics {
     const graphics = this.scene.add.graphics();
 
-    // Corpo do personagem (losango vermelho)
-    graphics.fillStyle(0xff4444, 1);
+    // Corpo do personagem (losango azul/ciano)
+    graphics.fillStyle(0x4488ff, 1);
     graphics.beginPath();
     graphics.moveTo(0, -20); // Topo
     graphics.lineTo(12, -10); // Direita
@@ -64,6 +83,11 @@ export class Player {
   private updatePosition(): void {
     const isoPos = cartesianToIsometric(this.gridX, this.gridY);
     this.sprite.setPosition(isoPos.x, isoPos.y);
+
+    // Atualiza posição da barra de vida
+    if (this.healthBar) {
+      this.healthBar.updatePosition(isoPos.x, isoPos.y - 35);
+    }
   }
 
   public setTargetPosition(isoX: number, isoY: number): void {
@@ -202,6 +226,84 @@ export class Player {
         }
       }
     });
+  }
+
+  /**
+   * Aplica dano ao player
+   */
+  public takeDamage(damage: number): void {
+    if (this.isInvulnerable || this.currentHealth <= 0) {
+      return;
+    }
+
+    this.currentHealth -= damage;
+    this.healthBar.setHealth(this.currentHealth);
+
+    // Efeito visual de dano (piscar vermelho)
+    this.sprite.setAlpha(0.5);
+    this.scene.time.delayedCall(100, () => {
+      this.sprite.setAlpha(1);
+    });
+
+    // Verifica se morreu
+    if (this.currentHealth <= 0) {
+      this.die();
+      return;
+    }
+
+    // Ativa invencibilidade temporária (500ms)
+    this.isInvulnerable = true;
+    this.scene.time.delayedCall(500, () => {
+      this.isInvulnerable = false;
+    });
+  }
+
+  /**
+   * Chamado quando o player morre
+   */
+  private die(): void {
+    this.currentHealth = 0;
+    this.healthBar.setHealth(0);
+
+    if (this.onDeathCallback) {
+      this.onDeathCallback();
+    }
+  }
+
+  /**
+   * Define callback para quando o player morrer
+   */
+  public setOnDeathCallback(callback: () => void): void {
+    this.onDeathCallback = callback;
+  }
+
+  /**
+   * Verifica se o player está vivo
+   */
+  public isAlive(): boolean {
+    return this.currentHealth > 0;
+  }
+
+  /**
+   * Retorna a vida atual
+   */
+  public getHealth(): number {
+    return this.currentHealth;
+  }
+
+  /**
+   * Retorna se está invulnerável
+   */
+  public isInvulnerableState(): boolean {
+    return this.isInvulnerable;
+  }
+
+  /**
+   * Destrói o player e seus componentes
+   */
+  public destroy(): void {
+    this.sprite.destroy();
+    this.healthBar.destroy();
   }
 
   /**

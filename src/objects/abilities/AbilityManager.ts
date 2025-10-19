@@ -65,6 +65,15 @@ export class AbilityManager {
   }
 
   /**
+   * Define callback para aplicar dano a inimigos
+   */
+  public setDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number) => void): void {
+    this.abilities.forEach(ability => {
+      ability.setDamageCallback(callback);
+    });
+  }
+
+  /**
    * Define callback para o dash
    */
   public setDashCallback(callback: (x: number, y: number, duration: number) => void): void {
