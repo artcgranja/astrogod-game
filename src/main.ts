@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
+import { MainMenuScene } from './scenes/MainMenuScene';
 import { GameScene } from './scenes/GameScene';
+import { GameOverScene } from './scenes/GameOverScene';
+import { LeaderboardScene } from './scenes/LeaderboardScene';
 
 /**
  * Configuração principal do jogo
@@ -10,7 +13,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: 720,
   backgroundColor: '#1a1a2e',
   parent: 'game-container',
-  scene: [GameScene],
+  scene: [MainMenuScene, GameScene, GameOverScene, LeaderboardScene],
   physics: {
     default: 'arcade',
     arcade: {

@@ -11,7 +11,7 @@ export class Enemy {
   private sprite: Phaser.GameObjects.Graphics;
   private gridX: number;
   private gridY: number;
-  private speed: number = 100; // Mais lento que o player
+  private speed: number = 70; // Mais lento que o player (150)
   private player: Player;
 
   // Sistema de vida
@@ -161,12 +161,20 @@ export class Enemy {
 
   /**
    * Empurra o inimigo para longe (usado pelo AoE)
+   * @param fromIsoX Posição X isométrica de onde vem o empurrão
+   * @param fromIsoY Posição Y isométrica de onde vem o empurrão
+   * @param force Força em pixels
    */
-  public knockback(fromX: number, fromY: number, force: number): void {
+  public knockback(fromIsoX: number, fromIsoY: number, force: number): void {
     if (this.isDead) return;
 
-    const angle = Math.atan2(this.gridY - fromY, this.gridX - fromX);
-    const forceInTiles = force / 32; // Converte pixels para tiles
+    const myIsoPos = this.getPosition();
+
+    // Calcula direção no espaço isométrico
+    const angle = Math.atan2(myIsoPos.y - fromIsoY, myIsoPos.x - fromIsoX);
+
+    // Converte força de pixels para tiles (aproximadamente)
+    const forceInTiles = force / 32;
 
     this.gridX += Math.cos(angle) * forceInTiles;
     this.gridY += Math.sin(angle) * forceInTiles;

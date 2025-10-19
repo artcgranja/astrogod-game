@@ -22,11 +22,10 @@ export class BeamAbility extends Ability {
     this.createBeamEffect(playerX, playerY, endX, endY, angle);
 
     // Aplica dano em linha reta (5 de dano = one-hit kill em inimigos)
-    // Passa ângulo e comprimento para detectar inimigos na linha
+    // Passa startX, startY, endX, endY para detectar inimigos na linha
     if (this.onDamageCallback) {
-      // Usa radius como "largura" do raio, e passa endX/endY como destino
-      this.onDamageCallback(playerX, playerY, 5, this.beamWidth, undefined);
-      // Vamos precisar de uma forma melhor de detectar linha, vou criar método separado na GameScene
+      // Passa beamWidth como radius (largura do raio) e endX/endY para detectar linha
+      this.onDamageCallback(playerX, playerY, 5, this.beamWidth, undefined, endX, endY);
     }
   }
 

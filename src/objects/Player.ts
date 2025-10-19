@@ -52,7 +52,7 @@ export class Player {
   /**
    * Define callback para quando habilidades causam dano
    */
-  public setAbilityDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number) => void): void {
+  public setAbilityDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number) => void): void {
     this.abilityManager.setDamageCallback(callback);
   }
 

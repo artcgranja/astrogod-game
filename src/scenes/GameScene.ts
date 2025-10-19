@@ -48,8 +48,8 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Define callback de dano das habilidades
-    this.player.setAbilityDamageCallback((x, y, damage, radius, knockback) => {
-      this.handleAbilityDamage(x, y, damage, radius, knockback);
+    this.player.setAbilityDamageCallback((x, y, damage, radius, knockback, endX, endY) => {
+      this.handleAbilityDamage(x, y, damage, radius, knockback, endX, endY);
     });
 
     // Cria o spawner de inimigos
@@ -201,22 +201,49 @@ export class GameScene extends Phaser.Scene {
   /**
    * Callback chamado quando habilidades causam dano
    */
-  private handleAbilityDamage(x: number, y: number, damage: number, radius?: number, knockback?: number): void {
+  private handleAbilityDamage(x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number): void {
     const enemies = this.enemySpawner.getEnemies();
+
+    console.log(`[DEBUG] handleAbilityDamage: damage=${damage}, radius=${radius}, knockback=${knockback}, endX=${endX}, endY=${endY}`);
+    console.log(`[DEBUG] Total enemies: ${enemies.length}`);
+
+    let hitCount = 0;
+
+    // Se tem endX e endY, é um raio em linha (Beam)
+    const isBeam = endX !== undefined && endY !== undefined;
 
     enemies.forEach(enemy => {
       const enemyPos = enemy.getPosition();
-      const dist = Phaser.Math.Distance.Between(x, y, enemyPos.x, enemyPos.y);
+      let hit = false;
 
-      // Se tem radius, é AoE ou Beam width
-      if (radius !== undefined && dist <= radius) {
+      if (isBeam) {
+        // Detecção em linha reta
+        const distToLine = this.pointToLineDistance(enemyPos.x, enemyPos.y, x, y, endX!, endY!);
+        console.log(`[DEBUG] Enemy at (${enemyPos.x}, ${enemyPos.y}), distance to line=${distToLine}, beamWidth=${radius}`);
+
+        if (radius !== undefined && distToLine <= radius) {
+          hit = true;
+        }
+      } else {
+        // Detecção em círculo (AoE)
+        const dist = Phaser.Math.Distance.Between(x, y, enemyPos.x, enemyPos.y);
+        console.log(`[DEBUG] Enemy at (${enemyPos.x}, ${enemyPos.y}), distance=${dist}, radius=${radius}`);
+
+        if (radius !== undefined && dist <= radius) {
+          hit = true;
+        }
+      }
+
+      if (hit) {
+        console.log(`[DEBUG] HIT! Dealing ${damage} damage`);
+        hitCount++;
+
         enemy.takeDamage(damage);
 
-        // Aplica knockback se especificado
+        // Aplica knockback se especificado (usando coordenadas isométricas)
         if (knockback !== undefined) {
-          const enemyGrid = enemy.getGridPosition();
-          const playerGrid = this.player.getGridPosition();
-          enemy.knockback(playerGrid.x, playerGrid.y, knockback);
+          const playerPos = this.player.getPosition();
+          enemy.knockback(playerPos.x, playerPos.y, knockback);
         }
 
         // Verifica se morreu
@@ -226,6 +253,44 @@ export class GameScene extends Phaser.Scene {
         }
       }
     });
+
+    console.log(`[DEBUG] Total hits: ${hitCount}`);
+  }
+
+  /**
+   * Calcula distância de um ponto a uma linha (segmento)
+   */
+  private pointToLineDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+
+    if (lenSq !== 0) {
+      param = dot / lenSq;
+    }
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = px - xx;
+    const dy = py - yy;
+
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
   /**
@@ -234,13 +299,13 @@ export class GameScene extends Phaser.Scene {
   private handlePlayerDeath(): void {
     const survivalTime = Math.floor((Date.now() - this.startTime) / 1000);
 
-    // TODO: Salvar estatísticas no localStorage
-
     // Aguarda um momento antes de mostrar Game Over
     this.time.delayedCall(1000, () => {
-      // TODO: Transição para GameOverScene
-      console.log(`Game Over! Kills: ${this.killCount}, Tempo: ${survivalTime}s`);
-      this.scene.restart();
+      // Transição para GameOverScene com os dados da run
+      this.scene.start('GameOverScene', {
+        kills: this.killCount,
+        survivalTime: survivalTime
+      });
     });
   }
 

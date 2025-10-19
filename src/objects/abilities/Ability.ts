@@ -11,7 +11,7 @@ export abstract class Ability {
   protected name: string;
   protected lockDuration: number; // duração em ms que o player fica travado
   protected onLockCallback?: (duration: number) => void;
-  protected onDamageCallback?: (x: number, y: number, damage: number, radius?: number, knockback?: number) => void;
+  protected onDamageCallback?: (x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number) => void;
 
   constructor(scene: Phaser.Scene, key: string, name: string, cooldownTime: number, lockDuration: number) {
     this.scene = scene;
@@ -74,9 +74,10 @@ export abstract class Ability {
 
   /**
    * Define callback para aplicar dano a inimigos
-   * @param callback Recebe (x, y, damage, radius opcional, knockback opcional)
+   * @param callback Recebe (x, y, damage, radius opcional, knockback opcional, endX opcional, endY opcional)
+   * Se endX e endY forem fornecidos, detecta em linha. Caso contrário, detecta em círculo.
    */
-  public setDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number) => void): void {
+  public setDamageCallback(callback: (x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number) => void): void {
     this.onDamageCallback = callback;
   }
 
