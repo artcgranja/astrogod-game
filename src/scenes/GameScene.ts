@@ -203,12 +203,10 @@ export class GameScene extends Phaser.Scene {
    */
   private handleAbilityDamage(x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number): void {
     const enemies = this.enemySpawner.getEnemies();
-    console.log(`[GameScene] handleAbilityDamage: ${enemies.length} inimigos vivos`);
 
     // Se tem endX e endY, é um raio em linha (Beam)
     const isBeam = endX !== undefined && endY !== undefined;
 
-    let hitCount = 0;
     enemies.forEach(enemy => {
       const enemyPos = enemy.getPosition();
       let hit = false;
@@ -230,8 +228,6 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (hit) {
-        hitCount++;
-        console.log(`[GameScene] Inimigo atingido #${hitCount}, aplicando ${damage} de dano`);
         enemy.takeDamage(damage);
 
         // Aplica knockback se especificado (usando coordenadas isométricas)
@@ -242,14 +238,11 @@ export class GameScene extends Phaser.Scene {
 
         // Verifica se morreu
         if (enemy.isDeadState()) {
-          console.log(`[GameScene] Inimigo morto! killCount antes: ${this.killCount}`);
           this.killCount++;
-          console.log(`[GameScene] killCount depois: ${this.killCount}`);
           this.updateKillCounter();
         }
       }
     });
-    console.log(`[GameScene] Total de inimigos atingidos: ${hitCount}`);
   }
 
   /**

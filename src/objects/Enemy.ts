@@ -140,15 +140,10 @@ export class Enemy {
    * Aplica dano ao inimigo
    */
   public takeDamage(damage: number): void {
-    if (this.isDead) {
-      console.log('[Enemy] takeDamage: j\u00e1 est\u00e1 morto, ignorando');
-      return;
-    }
+    if (this.isDead) return;
 
-    console.log(`[Enemy] takeDamage: vida antes=${this.currentHealth}, dano=${damage}`);
     this.currentHealth -= damage;
     this.healthBar.setHealth(this.currentHealth);
-    console.log(`[Enemy] takeDamage: vida depois=${this.currentHealth}`);
 
     // Efeito visual de dano (piscar com alpha - Graphics não tem setTint)
     this.sprite.setAlpha(0.5);
@@ -160,7 +155,6 @@ export class Enemy {
 
     // Verifica se morreu
     if (this.currentHealth <= 0) {
-      console.log('[Enemy] takeDamage: vida <= 0, chamando die()');
       this.die();
     }
   }
@@ -189,37 +183,30 @@ export class Enemy {
   }
 
   private die(): void {
-    console.log('[Enemy] die() chamado');
     this.isDead = true;
 
     // Esconde a barra de vida imediatamente
     if (this.healthBar) {
       this.healthBar.setVisible(false);
-      console.log('[Enemy] die(): healthBar escondida');
     }
 
     // Efeito de morte (fade out apenas do sprite)
-    console.log('[Enemy] die(): criando tween de fade out');
     this.scene.tweens.add({
       targets: this.sprite,
       alpha: 0,
       duration: 300,
       onComplete: () => {
-        console.log('[Enemy] die(): tween completo, chamando destroy()');
         this.destroy();
       }
     });
   }
 
   public destroy(): void {
-    console.log('[Enemy] destroy() chamado');
     if (this.sprite) {
       this.sprite.destroy();
-      console.log('[Enemy] destroy(): sprite destru\u00eddo');
     }
     if (this.healthBar) {
       this.healthBar.destroy();
-      console.log('[Enemy] destroy(): healthBar destru\u00edda');
     }
   }
 

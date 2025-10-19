@@ -4,12 +4,14 @@ export default defineConfig({
   base: './',
   server: {
     port: 3000,
-    open: true
+    strictPort: true  // Required for Tauri
   },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
     minify: 'terser',
-    sourcemap: true
-  }
+    sourcemap: false  // Reduce build size for production
+  },
+  // Prevent vite from obscuring rust errors
+  clearScreen: false
 })
