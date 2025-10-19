@@ -8,8 +8,8 @@ export class AoEAbility extends Ability {
   private radius: number = 100;
 
   constructor(scene: Phaser.Scene) {
-    // 5s cooldown, 500ms lock (duração da animação)
-    super(scene, 'Q', 'Explosão Astral', 5000, 500);
+    // 5s cooldown, 400ms lock (80% da animação de 500ms)
+    super(scene, 'Q', 'Explosão Astral', 5000, 400);
   }
 
   protected execute(playerX: number, playerY: number, targetX: number, targetY: number): void {
@@ -38,12 +38,12 @@ export class AoEAbility extends Ability {
         circle.clear();
         currentRadius += maxRadius / 20;
 
-        // Círculo externo (vermelho-alaranjado)
-        circle.lineStyle(4, 0xff4400, 1 - (currentRadius / maxRadius));
+        // Círculo externo (ciano)
+        circle.lineStyle(4, 0x00ffff, 1 - (currentRadius / maxRadius));
         circle.strokeCircle(x, y, currentRadius);
 
-        // Círculo interno (amarelo brilhante)
-        circle.lineStyle(2, 0xffff00, 1 - (currentRadius / maxRadius));
+        // Círculo interno (branco brilhante)
+        circle.lineStyle(2, 0xffffff, 1 - (currentRadius / maxRadius));
         circle.strokeCircle(x, y, currentRadius * 0.8);
       }
     });
@@ -62,7 +62,7 @@ export class AoEAbility extends Ability {
     for (let i = 0; i < particleCount; i++) {
       const angle = (Math.PI * 2 * i) / particleCount;
       const particle = this.scene.add.graphics();
-      particle.fillStyle(0xffaa00, 1);
+      particle.fillStyle(0x88ffff, 1);
       particle.fillCircle(0, 0, 4);
       particle.setPosition(x, y);
       particle.setDepth(501);

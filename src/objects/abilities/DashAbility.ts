@@ -11,7 +11,7 @@ export class DashAbility extends Ability {
   private onDashCallback?: (targetX: number, targetY: number, duration: number) => void;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 'E', 'Salto Estelar', 4000, 500); // 4s cooldown, 0.5s lock
+    super(scene, 'E', 'Salto Estelar', 4000, 400); // 4s cooldown, 400ms lock (80% da animação de 500ms)
   }
 
   /**
