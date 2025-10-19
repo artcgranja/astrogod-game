@@ -9,12 +9,15 @@ export abstract class Ability {
   protected lastUsedTime: number = 0;
   protected key: string;
   protected name: string;
+  protected lockDuration: number; // duração em ms que o player fica travado
+  protected onLockCallback?: (duration: number) => void;
 
-  constructor(scene: Phaser.Scene, key: string, name: string, cooldownTime: number) {
+  constructor(scene: Phaser.Scene, key: string, name: string, cooldownTime: number, lockDuration: number) {
     this.scene = scene;
     this.key = key;
     this.name = name;
     this.cooldownTime = cooldownTime;
+    this.lockDuration = lockDuration;
   }
 
   /**
@@ -51,8 +54,21 @@ export abstract class Ability {
     }
 
     this.lastUsedTime = this.scene.time.now;
+
+    // Notifica o player para travar movimento
+    if (this.onLockCallback) {
+      this.onLockCallback(this.lockDuration);
+    }
+
     this.execute(playerX, playerY, targetX, targetY);
     return true;
+  }
+
+  /**
+   * Define callback para travar o player durante cast
+   */
+  public setLockCallback(callback: (duration: number) => void): void {
+    this.onLockCallback = callback;
   }
 
   /**
@@ -70,5 +86,9 @@ export abstract class Ability {
 
   public getCooldownTime(): number {
     return this.cooldownTime;
+  }
+
+  public getLockDuration(): number {
+    return this.lockDuration;
   }
 }

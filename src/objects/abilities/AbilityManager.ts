@@ -10,6 +10,7 @@ import { DashAbility } from './DashAbility';
 export class AbilityManager {
   private abilities: Map<string, Ability> = new Map();
   private scene: Phaser.Scene;
+  private lockCallback?: (duration: number) => void;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -53,9 +54,20 @@ export class AbilityManager {
   }
 
   /**
+   * Define callback para travar o player durante cast de habilidades
+   */
+  public setLockCallback(callback: (duration: number) => void): void {
+    this.lockCallback = callback;
+    // Passa o callback para todas as habilidades
+    this.abilities.forEach(ability => {
+      ability.setLockCallback(callback);
+    });
+  }
+
+  /**
    * Define callback para o dash
    */
-  public setDashCallback(callback: (x: number, y: number) => void): void {
+  public setDashCallback(callback: (x: number, y: number, duration: number) => void): void {
     const dashAbility = this.abilities.get('E') as DashAbility;
     if (dashAbility) {
       dashAbility.setDashCallback(callback);

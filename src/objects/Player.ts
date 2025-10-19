@@ -14,6 +14,7 @@ export class Player {
   private targetY: number | null = null;
   private speed: number = 150; // pixels por segundo
   private abilityManager: AbilityManager;
+  private isLockedByCast: boolean = false;
 
   constructor(scene: Phaser.Scene, gridX: number, gridY: number) {
     this.scene = scene;
@@ -25,9 +26,14 @@ export class Player {
     // Inicializa o gerenciador de habilidades
     this.abilityManager = new AbilityManager(scene);
 
+    // Define callback para travar movimento durante cast
+    this.abilityManager.setLockCallback((duration: number) => {
+      this.lockMovement(duration);
+    });
+
     // Define callback para o dash
-    this.abilityManager.setDashCallback((x: number, y: number) => {
-      this.dashTo(x, y);
+    this.abilityManager.setDashCallback((x: number, y: number, duration: number) => {
+      this.dashToPosition(x, y, duration);
     });
   }
 
@@ -61,12 +67,22 @@ export class Player {
   }
 
   public setTargetPosition(isoX: number, isoY: number): void {
+    // Não permite movimento se estiver castando habilidade
+    if (this.isLockedByCast) {
+      return;
+    }
+
     const cartPos = isometricToCartesian(isoX, isoY);
     this.targetX = Math.round(cartPos.x);
     this.targetY = Math.round(cartPos.y);
   }
 
   public update(delta: number): void {
+    // Não move se estiver castando habilidade
+    if (this.isLockedByCast) {
+      return;
+    }
+
     if (this.targetX === null || this.targetY === null) {
       return;
     }
@@ -111,23 +127,81 @@ export class Player {
   }
 
   /**
-   * Move o personagem instantaneamente para uma posição (usado pelo dash)
-   */
-  public dashTo(isoX: number, isoY: number): void {
-    const cartPos = isometricToCartesian(isoX, isoY);
-    this.gridX = cartPos.x;
-    this.gridY = cartPos.y;
-    this.targetX = null;
-    this.targetY = null;
-    this.updatePosition();
-  }
-
-  /**
    * Usa uma habilidade
    */
   public useAbility(key: string, targetX: number, targetY: number): boolean {
+    // Não permite usar habilidade se já estiver castando
+    if (this.isLockedByCast) {
+      return false;
+    }
+
     const playerPos = this.getPosition();
     return this.abilityManager.useAbility(key, playerPos.x, playerPos.y, targetX, targetY);
+  }
+
+  /**
+   * Trava o movimento do player por uma duração (usado durante cast de habilidades)
+   */
+  public lockMovement(duration: number): void {
+    this.isLockedByCast = true;
+
+    // Cancela movimento atual
+    this.targetX = null;
+    this.targetY = null;
+
+    // Agenda o unlock após a duração
+    this.scene.time.delayedCall(duration, () => {
+      this.unlockMovement();
+    });
+  }
+
+  /**
+   * Destrava o movimento do player
+   */
+  public unlockMovement(): void {
+    this.isLockedByCast = false;
+  }
+
+  /**
+   * Verifica se o player está travado por cast
+   */
+  public isLocked(): boolean {
+    return this.isLockedByCast;
+  }
+
+  /**
+   * Move o personagem com dash (usado pela habilidade E)
+   */
+  public dashToPosition(targetX: number, targetY: number, duration: number, onComplete?: () => void): void {
+    const cartPos = isometricToCartesian(targetX, targetY);
+
+    // Objeto que será animado pelo tween
+    const dashData = {
+      x: this.gridX,
+      y: this.gridY
+    };
+
+    // Cria tween suave para o dash
+    this.scene.tweens.add({
+      targets: dashData,
+      x: cartPos.x,
+      y: cartPos.y,
+      duration: duration,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        this.gridX = dashData.x;
+        this.gridY = dashData.y;
+        this.updatePosition();
+      },
+      onComplete: () => {
+        this.gridX = cartPos.x;
+        this.gridY = cartPos.y;
+        this.updatePosition();
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    });
   }
 
   /**

@@ -8,7 +8,8 @@ export class AoEAbility extends Ability {
   private radius: number = 100;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 'Q', 'Explosão Astral', 5000); // 5 segundos de cooldown
+    // 5s cooldown, 500ms lock (duração da animação)
+    super(scene, 'Q', 'Explosão Astral', 5000, 500);
   }
 
   protected execute(playerX: number, playerY: number, targetX: number, targetY: number): void {

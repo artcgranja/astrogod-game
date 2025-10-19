@@ -48,9 +48,11 @@ npm run preview
 - Um marcador verde aparece no local clicado
 
 ### Habilidades (use com o mouse apontando para o alvo)
-- **Q - Explosão Astral** (Cooldown: 5s): Cria uma explosão de dano em área ao redor do personagem
-- **W - Raio Cósmico** (Cooldown: 3s): Dispara um raio reto da sua posição até o mouse
-- **E - Salto Estelar** (Cooldown: 4s): Teleporta instantaneamente para a posição do mouse (distância máxima de 200px)
+- **Q - Explosão Astral** (Cooldown: 5s): Cria uma explosão de dano em área ao redor do personagem. Player fica parado durante o cast (0.5s)
+- **W - Raio Cósmico** (Cooldown: 3s): Dispara um raio reto da sua posição até o mouse. Player fica parado durante o cast (0.4s)
+- **E - Salto Estelar** (Cooldown: 4s): Dash suave para a posição do mouse (distância máxima de 200px, duração de 0.5s)
+
+**IMPORTANTE**: O player fica travado e não pode se mover enquanto estiver usando qualquer habilidade. Isso evita que habilidades fiquem "voando sozinhas".
 
 ## Estrutura do Projeto
 
@@ -91,9 +93,10 @@ astrogod-game/
 - **Velocidade do Personagem**: 150 pixels/segundo
 - **Resolução**: 1280x720 (responsive)
 - **Habilidades**:
-  - Q: AoE de 100px de raio, 5s de cooldown
-  - W: Raio de 400px, 3s de cooldown
-  - E: Dash de até 200px, 4s de cooldown
+  - Q: AoE de 100px de raio, 5s de cooldown, 0.5s de cast lock
+  - W: Raio de 400px, 3s de cooldown, 0.4s de cast lock
+  - E: Dash de até 200px em 0.5s, 4s de cooldown
+- **Sistema de Cast Lock**: Player não pode se mover durante uso de habilidades
 
 ## Próximas Funcionalidades
 

@@ -9,7 +9,8 @@ export class BeamAbility extends Ability {
   private beamWidth: number = 20;
 
   constructor(scene: Phaser.Scene) {
-    super(scene, 'W', 'Raio Cósmico', 3000); // 3 segundos de cooldown
+    // 3s cooldown, 400ms lock (duração total da animação)
+    super(scene, 'W', 'Raio Cósmico', 3000, 400);
   }
 
   protected execute(playerX: number, playerY: number, targetX: number, targetY: number): void {
