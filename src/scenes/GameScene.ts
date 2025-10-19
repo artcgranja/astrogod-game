@@ -203,15 +203,12 @@ export class GameScene extends Phaser.Scene {
    */
   private handleAbilityDamage(x: number, y: number, damage: number, radius?: number, knockback?: number, endX?: number, endY?: number): void {
     const enemies = this.enemySpawner.getEnemies();
-
-    console.log(`[DEBUG] handleAbilityDamage: damage=${damage}, radius=${radius}, knockback=${knockback}, endX=${endX}, endY=${endY}`);
-    console.log(`[DEBUG] Total enemies: ${enemies.length}`);
-
-    let hitCount = 0;
+    console.log(`[GameScene] handleAbilityDamage: ${enemies.length} inimigos vivos`);
 
     // Se tem endX e endY, é um raio em linha (Beam)
     const isBeam = endX !== undefined && endY !== undefined;
 
+    let hitCount = 0;
     enemies.forEach(enemy => {
       const enemyPos = enemy.getPosition();
       let hit = false;
@@ -219,7 +216,6 @@ export class GameScene extends Phaser.Scene {
       if (isBeam) {
         // Detecção em linha reta
         const distToLine = this.pointToLineDistance(enemyPos.x, enemyPos.y, x, y, endX!, endY!);
-        console.log(`[DEBUG] Enemy at (${enemyPos.x}, ${enemyPos.y}), distance to line=${distToLine}, beamWidth=${radius}`);
 
         if (radius !== undefined && distToLine <= radius) {
           hit = true;
@@ -227,7 +223,6 @@ export class GameScene extends Phaser.Scene {
       } else {
         // Detecção em círculo (AoE)
         const dist = Phaser.Math.Distance.Between(x, y, enemyPos.x, enemyPos.y);
-        console.log(`[DEBUG] Enemy at (${enemyPos.x}, ${enemyPos.y}), distance=${dist}, radius=${radius}`);
 
         if (radius !== undefined && dist <= radius) {
           hit = true;
@@ -235,9 +230,8 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (hit) {
-        console.log(`[DEBUG] HIT! Dealing ${damage} damage`);
         hitCount++;
-
+        console.log(`[GameScene] Inimigo atingido #${hitCount}, aplicando ${damage} de dano`);
         enemy.takeDamage(damage);
 
         // Aplica knockback se especificado (usando coordenadas isométricas)
@@ -248,13 +242,14 @@ export class GameScene extends Phaser.Scene {
 
         // Verifica se morreu
         if (enemy.isDeadState()) {
+          console.log(`[GameScene] Inimigo morto! killCount antes: ${this.killCount}`);
           this.killCount++;
+          console.log(`[GameScene] killCount depois: ${this.killCount}`);
           this.updateKillCounter();
         }
       }
     });
-
-    console.log(`[DEBUG] Total hits: ${hitCount}`);
+    console.log(`[GameScene] Total de inimigos atingidos: ${hitCount}`);
   }
 
   /**

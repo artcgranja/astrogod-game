@@ -11,7 +11,7 @@ export class Enemy {
   private sprite: Phaser.GameObjects.Graphics;
   private gridX: number;
   private gridY: number;
-  private speed: number = 70; // Mais lento que o player (150)
+  private speed: number = 50; // Mais lento que o player (150)
   private player: Player;
 
   // Sistema de vida
@@ -140,21 +140,27 @@ export class Enemy {
    * Aplica dano ao inimigo
    */
   public takeDamage(damage: number): void {
-    if (this.isDead) return;
+    if (this.isDead) {
+      console.log('[Enemy] takeDamage: j\u00e1 est\u00e1 morto, ignorando');
+      return;
+    }
 
+    console.log(`[Enemy] takeDamage: vida antes=${this.currentHealth}, dano=${damage}`);
     this.currentHealth -= damage;
     this.healthBar.setHealth(this.currentHealth);
+    console.log(`[Enemy] takeDamage: vida depois=${this.currentHealth}`);
 
-    // Efeito visual de dano
-    this.sprite.setTint(0xff0000);
+    // Efeito visual de dano (piscar com alpha - Graphics não tem setTint)
+    this.sprite.setAlpha(0.5);
     this.scene.time.delayedCall(100, () => {
       if (this.sprite) {
-        this.sprite.clearTint();
+        this.sprite.setAlpha(1);
       }
     });
 
     // Verifica se morreu
     if (this.currentHealth <= 0) {
+      console.log('[Enemy] takeDamage: vida <= 0, chamando die()');
       this.die();
     }
   }
@@ -183,25 +189,37 @@ export class Enemy {
   }
 
   private die(): void {
+    console.log('[Enemy] die() chamado');
     this.isDead = true;
 
-    // Efeito de morte (fade out)
+    // Esconde a barra de vida imediatamente
+    if (this.healthBar) {
+      this.healthBar.setVisible(false);
+      console.log('[Enemy] die(): healthBar escondida');
+    }
+
+    // Efeito de morte (fade out apenas do sprite)
+    console.log('[Enemy] die(): criando tween de fade out');
     this.scene.tweens.add({
-      targets: [this.sprite, this.healthBar],
+      targets: this.sprite,
       alpha: 0,
       duration: 300,
       onComplete: () => {
+        console.log('[Enemy] die(): tween completo, chamando destroy()');
         this.destroy();
       }
     });
   }
 
   public destroy(): void {
+    console.log('[Enemy] destroy() chamado');
     if (this.sprite) {
       this.sprite.destroy();
+      console.log('[Enemy] destroy(): sprite destru\u00eddo');
     }
     if (this.healthBar) {
       this.healthBar.destroy();
+      console.log('[Enemy] destroy(): healthBar destru\u00edda');
     }
   }
 

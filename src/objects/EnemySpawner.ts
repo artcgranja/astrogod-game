@@ -10,7 +10,7 @@ export class EnemySpawner {
   private scene: Phaser.Scene;
   private player: Player;
   private enemies: Enemy[] = [];
-  private spawnInterval: number = 10000; // 10 segundos
+  private spawnInterval: number = 15000; // 15 segundos
   private lastSpawnTime: number = 0;
   private waveNumber: number = 0;
   private mapWidth: number;
@@ -53,8 +53,6 @@ export class EnemySpawner {
     const baseAmount = Phaser.Math.Between(3, 5);
     const additionalEnemies = Math.floor(this.waveNumber / 3); // +1 a cada 3 ondas
     const totalEnemies = baseAmount + additionalEnemies;
-
-    console.log(`Onda ${this.waveNumber}: Spawnando ${totalEnemies} inimigos`);
 
     for (let i = 0; i < totalEnemies; i++) {
       this.spawnEnemy();
