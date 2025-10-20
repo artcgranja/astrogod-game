@@ -32,7 +32,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Reseta variáveis de jogo ao iniciar/reiniciar
+    this.killCount = 0;
     this.startTime = Date.now();
+    this.markerVisible = false;
 
     // Cria o mapa isométrico (20x20 tiles)
     this.map = new IsometricMap(this, 20, 20);

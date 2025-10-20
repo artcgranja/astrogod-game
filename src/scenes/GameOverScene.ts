@@ -143,7 +143,6 @@ export class GameOverScene extends Phaser.Scene {
     buttonText.setOrigin(0.5);
 
     container.add([bg, buttonText]);
-    container.setSize(240, 60);
 
     // Torna interativo
     container.setInteractive(

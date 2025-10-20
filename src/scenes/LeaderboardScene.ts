@@ -165,7 +165,6 @@ export class LeaderboardScene extends Phaser.Scene {
     buttonText.setOrigin(0.5);
 
     container.add([bg, buttonText]);
-    container.setSize(300, 60);
 
     // Torna interativo
     container.setInteractive(
