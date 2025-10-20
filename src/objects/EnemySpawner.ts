@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Enemy } from './Enemy';
+import { EliteEnemy } from './EliteEnemy';
 import { Player } from './Player';
 import { isometricToCartesian } from '../utils/IsometricUtils';
 
@@ -9,12 +10,18 @@ import { isometricToCartesian } from '../utils/IsometricUtils';
 export class EnemySpawner {
   private scene: Phaser.Scene;
   private player: Player;
-  private enemies: Enemy[] = [];
+  private enemies: (Enemy | EliteEnemy)[] = [];
   private spawnInterval: number = 15000; // 15 segundos
   private lastSpawnTime: number = 0;
   private waveNumber: number = 0;
   private mapWidth: number;
   private mapHeight: number;
+
+  // Sistema de Elite Spawning
+  private eliteSpawnInterval: number = 120000; // ~2 minutos (120s)
+  private lastEliteSpawnTime: number = 0;
+  private eliteMultiplier: number = 1; // Quantos elites spawnar (1, 2, 4, 8...)
+  private shouldSkipNextWave: boolean = false; // Flag para pular onda normal quando elite spawna
 
   constructor(scene: Phaser.Scene, player: Player, mapWidth: number, mapHeight: number) {
     this.scene = scene;
@@ -39,9 +46,25 @@ export class EnemySpawner {
     // Remove inimigos mortos
     this.enemies = this.enemies.filter(enemy => !enemy.isDeadState());
 
-    // Verifica se é hora de spawnar nova onda
+    // Verifica se é hora de spawnar Elite (~2 minutos)
+    if (currentTime - this.lastEliteSpawnTime >= this.eliteSpawnInterval) {
+      this.spawnEliteWave();
+      this.lastEliteSpawnTime = currentTime;
+      this.shouldSkipNextWave = true; // Pula a próxima onda normal
+
+      // Randomiza próximo intervalo de elite (~2min ± 10s)
+      this.eliteSpawnInterval = 120000 + Phaser.Math.Between(-10000, 10000);
+    }
+
+    // Verifica se é hora de spawnar onda normal
     if (currentTime - this.lastSpawnTime >= this.spawnInterval) {
-      this.spawnWave();
+      if (this.shouldSkipNextWave) {
+        // Pula essa onda porque elite foi spawnado
+        this.shouldSkipNextWave = false;
+      } else {
+        // Spawna onda normal
+        this.spawnWave();
+      }
       this.lastSpawnTime = currentTime;
     }
   }
@@ -91,9 +114,56 @@ export class EnemySpawner {
   }
 
   /**
+   * Spawna uma onda de Elites (substitui onda normal)
+   */
+  private spawnEliteWave(): void {
+    // Spawna eliteMultiplier elites (1, 2, 4, 8...)
+    for (let i = 0; i < this.eliteMultiplier; i++) {
+      this.spawnElite();
+    }
+
+    // Dobra o número de elites para próximo spawn
+    this.eliteMultiplier *= 2;
+  }
+
+  /**
+   * Spawna um único Elite
+   */
+  private spawnElite(): void {
+    // Escolhe um lado aleatório da tela
+    const side = Phaser.Math.Between(0, 3);
+    let gridX: number;
+    let gridY: number;
+
+    // Define posição baseada no lado
+    switch (side) {
+      case 0: // Topo
+        gridX = Phaser.Math.Between(0, this.mapWidth - 1);
+        gridY = -2;
+        break;
+      case 1: // Direita
+        gridX = this.mapWidth + 2;
+        gridY = Phaser.Math.Between(0, this.mapHeight - 1);
+        break;
+      case 2: // Baixo
+        gridX = Phaser.Math.Between(0, this.mapWidth - 1);
+        gridY = this.mapHeight + 2;
+        break;
+      case 3: // Esquerda
+      default:
+        gridX = -2;
+        gridY = Phaser.Math.Between(0, this.mapHeight - 1);
+        break;
+    }
+
+    const elite = new EliteEnemy(this.scene, gridX, gridY, this.player);
+    this.enemies.push(elite);
+  }
+
+  /**
    * Retorna todos os inimigos vivos
    */
-  public getEnemies(): Enemy[] {
+  public getEnemies(): (Enemy | EliteEnemy)[] {
     return this.enemies.filter(e => !e.isDeadState());
   }
 

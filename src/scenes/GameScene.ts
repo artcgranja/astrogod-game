@@ -27,6 +27,9 @@ export class GameScene extends Phaser.Scene {
   private killCounterText!: Phaser.GameObjects.Text;
   private startTime: number = 0;
 
+  // Efeito visual de dano
+  private damageVignette!: Phaser.GameObjects.Graphics;
+
   constructor() {
     super({ key: 'GameScene' });
   }
@@ -48,6 +51,11 @@ export class GameScene extends Phaser.Scene {
     // Define callback de morte do player
     this.player.setOnDeathCallback(() => {
       this.handlePlayerDeath();
+    });
+
+    // Define callback de efeito visual ao tomar dano
+    this.player.setOnDamageEffectCallback(() => {
+      this.showDamageEffect();
     });
 
     // Define callback de dano das habilidades
@@ -81,6 +89,9 @@ export class GameScene extends Phaser.Scene {
 
     // Cria kill counter
     this.createKillCounter();
+
+    // Cria vinheta de dano (invisível inicialmente)
+    this.createDamageVignette();
   }
 
   private setupCamera(): void {
@@ -166,6 +177,46 @@ export class GameScene extends Phaser.Scene {
 
   private updateKillCounter(): void {
     this.killCounterText.setText(`☠ ${this.killCount}`);
+  }
+
+  /**
+   * Cria a vinheta vermelha de dano (nas bordas da tela)
+   */
+  private createDamageVignette(): void {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    this.damageVignette = this.add.graphics();
+    this.damageVignette.setScrollFactor(0);
+    this.damageVignette.setDepth(9999);
+    this.damageVignette.setAlpha(0);
+
+    // Desenha overlay vermelho nas bordas (vinheta)
+    const vignetteThickness = 100;
+    this.damageVignette.fillStyle(0xff0000, 0.4);
+
+    // Bordas superior, inferior, esquerda, direita
+    this.damageVignette.fillRect(0, 0, width, vignetteThickness); // Topo
+    this.damageVignette.fillRect(0, height - vignetteThickness, width, vignetteThickness); // Baixo
+    this.damageVignette.fillRect(0, 0, vignetteThickness, height); // Esquerda
+    this.damageVignette.fillRect(width - vignetteThickness, 0, vignetteThickness, height); // Direita
+  }
+
+  /**
+   * Mostra o efeito visual ao tomar dano (shake + vinheta vermelha)
+   */
+  private showDamageEffect(): void {
+    // Camera shake
+    this.cameras.main.shake(200, 0.01);
+
+    // Flash da vinheta vermelha
+    this.tweens.add({
+      targets: this.damageVignette,
+      alpha: 1,
+      duration: 100,
+      yoyo: true,
+      ease: 'Quad.easeOut'
+    });
   }
 
   private showTargetMarker(x: number, y: number): void {

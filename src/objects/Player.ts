@@ -23,6 +23,7 @@ export class Player {
   private healthBar: HealthBar;
   private isInvulnerable: boolean = false;
   private onDeathCallback?: () => void;
+  private onDamageEffectCallback?: () => void;
 
   constructor(scene: Phaser.Scene, gridX: number, gridY: number) {
     this.scene = scene;
@@ -245,6 +246,11 @@ export class Player {
       this.sprite.setAlpha(1);
     });
 
+    // Chama callback de efeito visual na tela (shake + vinheta)
+    if (this.onDamageEffectCallback) {
+      this.onDamageEffectCallback();
+    }
+
     // Verifica se morreu
     if (this.currentHealth <= 0) {
       this.die();
@@ -275,6 +281,13 @@ export class Player {
    */
   public setOnDeathCallback(callback: () => void): void {
     this.onDeathCallback = callback;
+  }
+
+  /**
+   * Define callback para efeito visual ao tomar dano
+   */
+  public setOnDamageEffectCallback(callback: () => void): void {
+    this.onDamageEffectCallback = callback;
   }
 
   /**
